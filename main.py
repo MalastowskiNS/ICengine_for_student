@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 # importing the user's module
 import GetHeatParts as lw
+import get_properties as gp
 from input_data import *
 import IndDiaG_exp as exp
 from Volume import Vol
@@ -17,8 +18,14 @@ Cv=21                           # теплоемкость, Дж/моль/К
 V=np.zeros((N+1,1))             # объем КС, m^3
 P=np.zeros((N+1,1))             # давление, Па
 T=np.zeros((N+1,1))             # температура, K
-M=np.zeros((N+1,1))             # кол-во вещества, моль
-
+# кол-во вещества, моль
+M = {
+    'N2':  np.zeros((N+1,1)),
+    'O2':  np.zeros((N+1,1)),
+    'CO2': np.zeros((N+1,1)),
+    'H2O': np.zeros((N+1,1)),
+    'Mixture': np.zeros((N+1,1))
+}
 
 def main():
  # Чтение данныех экс. индикаторной диаграммы
@@ -26,15 +33,24 @@ def main():
  # Граничные условия на момент начала расчета
     P[Fi_zvk] = Pexp[Fi_zvk]
     T[Fi_zvk] = Texp[Fi_zvk]
-    M[Fi_zvk] = P[Fi_zvk] * Vol(Fi_zvk) / T[Fi_zvk] / Rm
+    M['Mixture'][Fi_zvk]=P[Fi_zvk] * Vol(Fi_zvk) / T[Fi_zvk] / Rm
+    M['N2'][Fi_zvk] = 0.79 * M['Mixture'][Fi_zvk]
+    M['O2'][Fi_zvk] = 0.21 * M['Mixture'][Fi_zvk]
+    M['CO2'][Fi_zvk] = 0
+    M['H2O'][Fi_zvk] = 0
     Fi=Fi_zvk
-    print(P[Fi_zvk],T[Fi_zvk], M[Fi_zvk],Vol(Fi_zvk))
+    print(P[Fi_zvk],T[Fi_zvk], M['Mixture'][Fi_zvk],Vol(Fi_zvk))
  # Расчет процесса сжатия
     while Fi < 181:
-        dT=(lw.dL(P[Fi], Fi)+lw.dQw(P[Fi],T[Fi],Fi))/Cv/M[Fi]
+        Cv=gp.get_properties(M,T[Fi])
+        dT=(lw.dL(P[Fi], Fi)+lw.dQw(P[Fi],T[Fi],Fi))/Cv/M['Mixture'][Fi]
         T[Fi+1]=T[Fi]+dT*dFi
-        M[Fi+1]=M[Fi]
-        P[Fi+1]=M[Fi+1]*T[Fi+1]*Rm/Vol(Fi+1)
+        M['N2'][Fi+1] =  M['N2'][Fi]
+        M['O2'][Fi+1] =  M['O2'][Fi]
+        M['CO2'][Fi+1] = M['CO2'][Fi]
+        M['H2O'][Fi+1] = M['H2O'][Fi]
+        M['Mixture'][Fi+1] =sum([M[key][Fi+1]for key in M.keys])
+        P[Fi+1]=M['Mixture'][Fi+1]*T[Fi+1]*Rm/Vol(Fi+1)
         Fi += 1
  # Отображение результатов расчета
     plt.figure(1)
