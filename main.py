@@ -42,14 +42,14 @@ def main():
     print(P[Fi_zvk],T[Fi_zvk], M['Mixture'][Fi_zvk],Vol(Fi_zvk))
  # Расчет процесса сжатия
     while Fi < 181:
-        Cv=gp.get_properties(M,T[Fi])
+        Cv=gp.get_properties({key:value[Fi] for (key,value) in M.items()},T[Fi])
         dT=(lw.dL(P[Fi], Fi)+lw.dQw(P[Fi],T[Fi],Fi))/Cv/M['Mixture'][Fi]
         T[Fi+1]=T[Fi]+dT*dFi
         M['N2'][Fi+1] =  M['N2'][Fi]
         M['O2'][Fi+1] =  M['O2'][Fi]
         M['CO2'][Fi+1] = M['CO2'][Fi]
         M['H2O'][Fi+1] = M['H2O'][Fi]
-        M['Mixture'][Fi+1] =sum([M[key][Fi+1]for key in M.keys])
+        M['Mixture'][Fi+1] =M['N2'][Fi+1]+M['O2'][Fi+1]+M['CO2'][Fi+1]+M['H2O'][Fi+1]
         P[Fi+1]=M['Mixture'][Fi+1]*T[Fi+1]*Rm/Vol(Fi+1)
         Fi += 1
  # Отображение результатов расчета
@@ -65,12 +65,4 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-
-# Меня смущает
-# 1 - будет оцень много import
-# 2 - как лучше сделать с графиками, а то строк и настроек много в основном коде - тупо функцию в которую передавать строки и массивы ?
-#from GetWork import dL
-#from GetHeat import dQw
 
