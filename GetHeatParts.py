@@ -12,11 +12,10 @@ def dL(P, Fi):
     return dl
 
 def dQw(P, T, Fi):
-
     delta = 0.005
-    T_h = 250
-    T_cyl = 180
-    T_p = 275
+    T_h = 473
+    T_cyl = 420
+    T_p = 521
     Cm = S * n / 30
     Fpist = np.pi*D**2/4
     Vh = Fpist * S
