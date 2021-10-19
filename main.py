@@ -13,6 +13,7 @@ from Graph import graph
 N=900                           # количество расчетных шагов
 Rm=8.314                        # универсальная газовая постоянная, Дж/моль/К
 dFi=np.pi/180                   # приращение угла в радианах
+lo=495.2                        # стехиометрическое количество воздуха
 # объявление массивов данных
 V=np.zeros((N+1,1))             # объем КС, m^3
 P=np.zeros((N+1,1))             # давление, Па
@@ -37,6 +38,8 @@ def main():
     M['O2'][Fi_zvk] = 0.21 * M['Mixture'][Fi_zvk]
     M['CO2'][Fi_zvk] = 0
     M['H2O'][Fi_zvk] = 0
+    qc=M['Mixture'][Fi_zvk]/lo/alpha
+    print(qc)
     Fi=Fi_zvk
     print(P[Fi_zvk],T[Fi_zvk], M['Mixture'][Fi_zvk],Vol(Fi_zvk))
  # Расчет процесса сжатия
