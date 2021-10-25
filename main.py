@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import GetHeatParts as lw
 import get_properties as gp
 from input_data import *
+from dXdFi import dXdfi
 import IndDiaG_exp as exp
 from Volume import Vol
 from Graph import graph
@@ -14,12 +15,25 @@ N = 900                           # количество расчетных ша
 Rm = 8.314                        # универсальная газовая постоянная, Дж/моль/К
 dFi = np.pi/180                   # приращение угла в радианах
 lo = 495.2                        # стехиометрическое количество воздуха
+# Топливо
+CG = 0.87
+HG = 0.126
+OG = 0.004
 # объявление массивов данных
 V = np.zeros((N+1, 1))             # объем КС, m^3
 P = np.zeros((N+1, 1))             # давление, Па
 T = np.zeros((N+1, 1))             # температура, K
+CV = np.zeros((N+1, 1))             # отобращение теплоемкости смеси, Дж/моль/К
 # кол-во вещества, моль
 M = {
+    'N2':  np.zeros((N+1, 1)),
+    'O2':  np.zeros((N+1, 1)),
+    'CO2': np.zeros((N+1, 1)),
+    'H2O': np.zeros((N+1, 1)),
+    'Mixture': np.zeros((N+1, 1))
+}
+# Изменение количества веществ, моль
+dM = {
     'N2':  np.zeros((N+1, 1)),
     'O2':  np.zeros((N+1, 1)),
     'CO2': np.zeros((N+1, 1)),
@@ -41,21 +55,25 @@ def main():
     M['CO2'][Fi_zvk] = 0
     M['H2O'][Fi_zvk] = 0
     qc = M['Mixture'][Fi_zvk]/lo/alpha
-    print(qc)
     Fi = Fi_zvk
-    print(P[Fi_zvk], T[Fi_zvk], M['Mixture'][Fi_zvk], Vol(Fi_zvk))
  # Расчет процесса сжатия
     while Fi < 360:
         cv = gp.get_properties({key: value[Fi] for (key, value) in M.items()}, T[Fi])
+        CV[Fi]=cv
         dT = (lw.dL(P[Fi], Fi)+lw.dQw(P[Fi], T[Fi], Fi)+lw.dQc(Fi, qc)) / cv / M['Mixture'][Fi]
         T[Fi+1] = T[Fi]+dT*dFi
-        M['N2'][Fi+1] = M['N2'][Fi]
-        M['O2'][Fi+1] = M['O2'][Fi]
-        M['CO2'][Fi+1] = M['CO2'][Fi]
-        M['H2O'][Fi+1] = M['H2O'][Fi]
+        dM['N2'][Fi] = 0
+        dM['O2'][Fi] = -0.21 * (lo * qc) * dXdfi(Fi)
+        dM['CO2'][Fi] = CG / 0.012 * dXdfi(Fi) * qc
+        dM['H2O'][Fi] = HG / 0.002 * dXdfi(Fi) * qc
+        M['N2'][Fi+1] = M['N2'][Fi] + dM['N2'][Fi]
+        M['O2'][Fi+1] = M['O2'][Fi] + dM['O2'][Fi]
+        M['CO2'][Fi+1] = M['CO2'][Fi] + dM['CO2'][Fi]
+        M['H2O'][Fi+1] = M['H2O'][Fi] + dM['H2O'][Fi]
         M['Mixture'][Fi+1] = M['N2'][Fi+1]+M['O2'][Fi+1]+M['CO2'][Fi+1]+M['H2O'][Fi+1]
         P[Fi+1] = M['Mixture'][Fi+1]*T[Fi+1]*Rm/Vol(Fi+1)
         Fi += 1
+    print( M['Mixture'][359]/M['Mixture'][Fi_zvk])
  # Отображение результатов расчета
     plt.figure(1)
     graph(np.arange(0, len(Texp)), Texp, "Texp")
@@ -65,7 +83,14 @@ def main():
     graph(np.arange(0, N + 1), P, "Prez", "Давление в КС", "Давление, Па", "Угол поворота КВ, град")
     plt.show()
     plt.figure(3)
-    graph(np.arange(0, N + 1), M['Mixture'], "Кол-во вещества", "Вещества в цилиндре", "Mixture, моль", "Угол поворота КВ, град")
+    graph(np.arange(0, N + 1), M['N2'], "N2")
+    graph(np.arange(0, N + 1), M['O2'], "O2")
+    graph(np.arange(0, N + 1), M['CO2'], "CO2")
+    graph(np.arange(0, N + 1), M['H2O'], "H2O")
+    graph(np.arange(0, N + 1), M['Mixture'], "Кол-во вещества", "Вещества в цилиндре", "моль", "Угол поворота КВ, град")
+    plt.show()
+    plt.figure(4)
+    graph(np.arange(0, N + 1), CV, "Теплоемкость смеси", "Вещества в цилиндре", "Дж/моль/К", "Угол поворота КВ, град")
     plt.show()
 
 
