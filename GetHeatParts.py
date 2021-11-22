@@ -5,8 +5,8 @@ from Volume import Vol
 from input_data import D, S, eps, n
 from dXdFi import dXdfi
 
-dFi = np.pi / 180  # приращение угла в радианах
-Hu = 42.5e6             #низшая теплота сгорания диз.топлива, Дж/кг
+dFi = np.pi / 180       # приращение угла в радианах
+Hu = 42.5e6             # низшая теплота сгорания диз.топлива, Дж/кг
 
 def dL(P, Fi):
 
