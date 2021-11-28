@@ -9,6 +9,7 @@ from dXdFi import dXdfi
 import IndDiaG_exp as exp
 from Volume import Vol
 from Graph import graph
+import GetFlowRate as fl
 
 # Постоянные расчета
 N = 900                           # количество расчетных шагов
@@ -56,20 +57,22 @@ def main():
     qc = M['Mixture'][Fi_zvk]/lo/alpha
     Fi = Fi_zvk
  # Расчет процесса сжатия
-    while Fi < 360:
-        cv = gp.get_properties({key: value[Fi] for (key, value) in M.items()}, T[Fi])
-        CV[Fi]=cv
-        dT = (lw.dL(P[Fi], Fi)+lw.dQw(P[Fi], T[Fi], Fi)+lw.dQc(Fi, qc)) / cv / M['Mixture'][Fi]
-        T[Fi+1] = T[Fi]+dT*dFi
-        dM['N2'][Fi] = 0
-        dM['O2'][Fi] = -0.21 * (lo * qc) * dXdfi(Fi)
-        dM['CO2'][Fi] = CG / 0.012 * dXdfi(Fi) * qc
-        dM['H2O'][Fi] = HG / 0.002 * dXdfi(Fi) * qc
-        M['N2'][Fi+1] = M['N2'][Fi] + dM['N2'][Fi]
-        M['O2'][Fi+1] = M['O2'][Fi] + dM['O2'][Fi]
-        M['CO2'][Fi+1] = M['CO2'][Fi] + dM['CO2'][Fi]
-        M['H2O'][Fi+1] = M['H2O'][Fi] + dM['H2O'][Fi]
+    while Fi <= 720+Fi_zvk:
+        [dMin, dHin] = fl.getFlowRate(P[Fi], T[Fi], {key: value[Fi] for (key, value) in M.items()}, Fi, 'int')
+        [dMout, dHout] = fl.getFlowRate(P[Fi], T[Fi], {key: value[Fi] for (key, value) in M.items()}, Fi, 'exh')
+        dM['N2'][Fi] = 0+dMin['N2']+dMout['N2']
+        dM['O2'][Fi] = -0.21 * (lo * qc) * dXdfi(Fi)/dFi+dMin['O2']+dMout['O2']
+        dM['CO2'][Fi] = CG / 0.012 * dXdfi(Fi) * qc/dFi+dMin['CO2']+dMout['CO2']
+        dM['H2O'][Fi] = HG / 0.002 * dXdfi(Fi) * qc/dFi+dMin['H2O']+dMout['H2O']
+        M['N2'][Fi+1] = M['N2'][Fi] + dM['N2'][Fi]*dFi
+        M['O2'][Fi+1] = M['O2'][Fi] + dM['O2'][Fi]*dFi
+        M['CO2'][Fi+1] = M['CO2'][Fi] + dM['CO2'][Fi]*dFi
+        M['H2O'][Fi+1] = M['H2O'][Fi] + dM['H2O'][Fi]*dFi
         M['Mixture'][Fi+1] = M['N2'][Fi+1]+M['O2'][Fi+1]+M['CO2'][Fi+1]+M['H2O'][Fi+1]
+        cv = gp.get_properties({key: value[Fi] for (key, value) in M.items()}, T[Fi])
+        CV[Fi] = cv
+        dT = (lw.dL(P[Fi], Fi) + lw.dQw(P[Fi], T[Fi], Fi) + lw.dQc(Fi, qc)+dHin+dHout-cv*T[Fi]/dFi*(M['Mixture'][Fi+1]-M['Mixture'][Fi])) / cv / M['Mixture'][Fi]
+        T[Fi + 1] = T[Fi] + dT * dFi
         P[Fi+1] = M['Mixture'][Fi+1]*T[Fi+1]*Rm/Vol(Fi+1)
         Fi += 1
     print( M['Mixture'][359]/M['Mixture'][Fi_zvk])
@@ -80,7 +83,6 @@ def main():
     plt.figure(2)
     graph(np.arange(0, len(Pexp)), Pexp, "Pexp")
     graph(np.arange(0, N + 1), P, "Prez", "Давление в КС", "Давление, Па", "Угол поворота КВ, град")
-    plt.show()
     plt.figure(3)
     graph(np.arange(0, N + 1), M['N2'], "N2")
     graph(np.arange(0, N + 1), M['O2'], "O2")

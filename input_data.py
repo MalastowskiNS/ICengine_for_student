@@ -20,12 +20,3 @@ Tog = 777
 Pog = 1.9044 * 10 ** 5
 # Параметры сгорания
 Fi_ovt = 1
-
-
-# Коэффициенты для теплоемкостей
-# Газ на входе
-# rin=struct('N2',0.79,'O2',0.21,'CO2',0,'H2O',0,'Mixture', 1)
-# ml_in=rin.N2*ml.N2+rin.O2*ml.O2+rin.CO2*ml.CO2+rin.H2O*ml.H2O
-# Газ на выходе
-# rout=struct('N2',0.7212,'O2',0.0959,'CO2',0.0668,'H2O',0.1161,'Mixture', 1)
-# ml_out=rout.N2*ml.N2+rout.O2*ml.O2+rout.CO2*ml.CO2+rout.H2O*ml.H2O
